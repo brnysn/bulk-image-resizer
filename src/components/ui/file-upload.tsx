@@ -34,7 +34,7 @@ export const FileUpload = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (newFiles: File[]) => {
-    const maxFiles = 25;
+    const maxFiles = 999; // TODO: Change to 25 after testing
     const currentCount = files.length;
     const availableSlots = maxFiles - currentCount;
     
@@ -70,7 +70,14 @@ export const FileUpload = ({
     }
   };
 
-  const maxFiles = 25;
+  const removeAllFiles = () => {
+    setFiles([]);
+    if (onChange) {
+      onChange([]);
+    }
+  };
+
+  const maxFiles = 999; // TODO: Change to 25 after testing
   const isAtLimit = files.length >= maxFiles;
 
   const { getRootProps, isDragActive } = useDropzone({
@@ -121,6 +128,18 @@ export const FileUpload = ({
           }`}>
             {files.length}/{maxFiles} images uploaded
           </p>
+          {files.length > 0 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                removeAllFiles();
+              }}
+              className="relative z-20 mt-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 font-medium text-sm"
+              title="Remove all files"
+            >
+              Remove All
+            </button>
+          )}
           <div className="relative w-full mt-10 max-w-xl mx-auto">
             {files.length > 0 &&
               files.map((file, idx) => (
