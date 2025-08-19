@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ImageProcessorSidebar, ImageProcessingSettings } from "@/components/ui/image-processor-sidebar";
 import { FileUpload } from "@/components/ui/file-upload";
 import { ImageProcessor } from "@/lib/image-processor";
+import { ProcessingOverlay } from "@/components/ui/processing-overlay";
 
 export default function Home() {
   const [settings, setSettings] = useState<ImageProcessingSettings>({
@@ -20,6 +21,10 @@ export default function Home() {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processor] = useState(() => new ImageProcessor());
+  const [processingProgress, setProcessingProgress] = useState(0);
+  const [currentStep, setCurrentStep] = useState<string>('');
+  const [currentImage, setCurrentImage] = useState<string>('');
+  const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
 
   const handleFileUpload = (files: File[]) => {
     setUploadedFiles(files);
@@ -32,19 +37,44 @@ export default function Home() {
     }
 
     setIsProcessing(true);
+    setProcessingProgress(0);
+    setCurrentStep('initializing');
+    setCurrentImage('');
+    setCurrentImageIndex(0);
 
     try {
+      // Initialization step
+      setCurrentStep('initializing');
+      setProcessingProgress(5);
+      await new Promise(resolve => setTimeout(resolve, 500)); // Brief delay for UX
+
       // Process each image file directly
+      setCurrentStep('processing');
       const processedImages = [];
+      const totalImages = uploadedFiles.length;
+      
       for (let i = 0; i < uploadedFiles.length; i++) {
         const file = uploadedFiles[i];
+        setCurrentImage(file.name);
+        setCurrentImageIndex(i);
+        
         try {
           console.log(`Processing image ${i + 1}/${uploadedFiles.length}: ${file.name}`);
+          
+          // Calculate progress: 10% for init, 80% for processing, 10% for zip creation
+          const imageProgress = (i / totalImages) * 80;
+          setProcessingProgress(10 + imageProgress);
+          
           const processedBlob = await processor.processImage(file, settings);
           processedImages.push({
             name: file.name,
             data: processedBlob,
           });
+          
+          // Update progress after each image
+          const completedProgress = ((i + 1) / totalImages) * 80;
+          setProcessingProgress(10 + completedProgress);
+          
         } catch (error) {
           console.error(`Failed to process ${file.name}:`, error);
           // Continue with other images instead of stopping completely
@@ -55,20 +85,44 @@ export default function Home() {
       if (processedImages.length === 0) {
         alert("No images could be processed successfully!");
         setIsProcessing(false);
+        setProcessingProgress(0);
+        setCurrentStep('');
         return;
       }
 
       // Create new ZIP with processed images
+      setCurrentStep('creating-zip');
+      setCurrentImage('');
+      setProcessingProgress(90);
+      
       const processedZip = await processor.createZip(processedImages, settings.format);
+      
+      // Final step
+      setProcessingProgress(95);
+      await new Promise(resolve => setTimeout(resolve, 500)); // Brief delay for UX
       
       // Download the result
       processor.downloadBlob(processedZip, 'processed_images.zip');
+      
+      // Completion
+      setCurrentStep('completed');
+      setProcessingProgress(100);
+      
+      // Keep the completion state visible for a moment
+      setTimeout(() => {
+        setIsProcessing(false);
+        setProcessingProgress(0);
+        setCurrentStep('');
+        setCurrentImage('');
+      }, 2000);
 
     } catch (error) {
       console.error('Error processing images:', error);
       alert('An error occurred while processing the images. Please try again.');
-    } finally {
       setIsProcessing(false);
+      setProcessingProgress(0);
+      setCurrentStep('');
+      setCurrentImage('');
     }
   };
 
@@ -79,6 +133,16 @@ export default function Home() {
         onSettingsChange={setSettings}
         onGenerate={handleGenerate}
         isProcessing={isProcessing}
+      />
+      
+      {/* Processing Overlay */}
+      <ProcessingOverlay
+        isVisible={isProcessing}
+        progress={processingProgress}
+        currentStep={currentStep}
+        currentImage={currentImage}
+        totalImages={uploadedFiles.length}
+        currentImageIndex={currentImageIndex}
       />
       
       {/* Main content area - positioned to account for sidebar */}
