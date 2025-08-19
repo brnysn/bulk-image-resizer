@@ -21,7 +21,7 @@ export function ProcessingOverlay({
   totalImages,
   currentImageIndex,
 }: ProcessingOverlayProps) {
-  const getStatusMessage = (step: string, progress: number) => {
+  const getStatusMessage = (step: string) => {
     if (step === 'initializing') return 'Initializing image processing...';
     if (step === 'processing') {
       if (currentImage && totalImages && currentImageIndex !== undefined) {
@@ -106,7 +106,7 @@ export function ProcessingOverlay({
                 {/* Status Message */}
                 <div className="text-center">
                   <p className="text-sm text-gray-600 font-medium">
-                    {getStatusMessage(currentStep, progress)}
+                    {getStatusMessage(currentStep)}
                   </p>
                   
                   {/* Image counter for processing step */}
@@ -151,7 +151,7 @@ export function ProcessingOverlay({
               {/* Warning message */}
               <div className="mt-6 text-center">
                 <p className="text-xs text-gray-500">
-                  Please don't close this tab or navigate away during processing
+                  Please don&apos;t close this tab or navigate away during processing
                 </p>
               </div>
             </div>
