@@ -34,7 +34,22 @@ export const FileUpload = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (newFiles: File[]) => {
-    const updatedFiles = [...files, ...newFiles];
+    const maxFiles = 25;
+    const currentCount = files.length;
+    const availableSlots = maxFiles - currentCount;
+    
+    if (availableSlots <= 0) {
+      alert(`Maximum of ${maxFiles} images allowed. Please remove some files first.`);
+      return;
+    }
+    
+    let filesToAdd = newFiles;
+    if (newFiles.length > availableSlots) {
+      alert(`You can only add ${availableSlots} more image(s). Only the first ${availableSlots} files will be added.`);
+      filesToAdd = newFiles.slice(0, availableSlots);
+    }
+    
+    const updatedFiles = [...files, ...filesToAdd];
     setFiles(updatedFiles);
     if (onChange) {
       onChange(updatedFiles);
@@ -42,12 +57,26 @@ export const FileUpload = ({
   };
 
   const handleClick = () => {
-    fileInputRef.current?.click();
+    if (!isAtLimit) {
+      fileInputRef.current?.click();
+    }
   };
+
+  const removeFile = (indexToRemove: number) => {
+    const updatedFiles = files.filter((_, index) => index !== indexToRemove);
+    setFiles(updatedFiles);
+    if (onChange) {
+      onChange(updatedFiles);
+    }
+  };
+
+  const maxFiles = 25;
+  const isAtLimit = files.length >= maxFiles;
 
   const { getRootProps, isDragActive } = useDropzone({
     multiple: true,
     noClick: true,
+    disabled: isAtLimit,
     accept: {
       'image/jpeg': ['.jpg', '.jpeg'],
       'image/png': ['.png'],
@@ -85,7 +114,12 @@ export const FileUpload = ({
             Upload images for processing
           </p>
           <p className="relative z-20 font-sans font-normal text-neutral-400 dark:text-neutral-400 text-base mt-2">
-            Drag or drop your images here or click to upload multiple files
+            {isAtLimit ? 'Maximum limit reached' : 'Drag or drop your images here or click to upload multiple files'}
+          </p>
+          <p className={`relative z-20 font-sans font-normal text-sm mt-1 ${
+            isAtLimit ? 'text-red-500' : 'text-neutral-500 dark:text-neutral-500'
+          }`}>
+            {files.length}/{maxFiles} images uploaded
           </p>
           <div className="relative w-full mt-10 max-w-xl mx-auto">
             {files.length > 0 &&
@@ -107,14 +141,26 @@ export const FileUpload = ({
                     >
                       {file.name}
                     </motion.p>
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      layout
-                      className="rounded-lg px-2 py-1 w-fit flex-shrink-0 text-sm text-neutral-600 dark:bg-neutral-800 dark:text-white shadow-input"
-                    >
-                      {(file.size / (1024 * 1024)).toFixed(2)} MB
-                    </motion.p>
+                    <div className="flex items-center gap-2">
+                      <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        layout
+                        className="rounded-lg px-2 py-1 w-fit flex-shrink-0 text-sm text-neutral-600 dark:bg-neutral-800 dark:text-white shadow-input"
+                      >
+                        {(file.size / (1024 * 1024)).toFixed(2)} MB
+                      </motion.p>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeFile(idx);
+                        }}
+                        className="w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center text-sm font-bold transition-colors"
+                        title="Remove file"
+                      >
+                        ×
+                      </button>
+                    </div>
                   </div>
 
                   <div className="flex text-sm md:flex-row flex-col items-start md:items-center w-full mt-2 justify-between text-neutral-600 dark:text-neutral-400">
