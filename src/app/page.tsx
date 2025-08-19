@@ -8,6 +8,7 @@ import { ProcessingOverlay } from "@/components/ui/processing-overlay";
 
 export default function Home() {
   const [settings, setSettings] = useState<ImageProcessingSettings>({
+    removeBackground: false,
     width: 900,
     height: 900,
     cropPosition: "Crop Bottom Middle",
@@ -49,9 +50,13 @@ export default function Home() {
       await new Promise(resolve => setTimeout(resolve, 500)); // Brief delay for UX
 
       // Process each image file directly
-      setCurrentStep('processing');
       const processedImages = [];
       const totalImages = uploadedFiles.length;
+      
+      // Calculate progress distribution based on settings
+      const hasBackgroundRemoval = settings.removeBackground;
+      const bgRemovalProgress = hasBackgroundRemoval ? 40 : 0; // 40% for background removal if enabled
+      const processingProgress = hasBackgroundRemoval ? 40 : 80; // Remaining for processing
       
       for (let i = 0; i < uploadedFiles.length; i++) {
         const file = uploadedFiles[i];
@@ -61,18 +66,34 @@ export default function Home() {
         try {
           console.log(`Processing image ${i + 1}/${uploadedFiles.length}: ${file.name}`);
           
-          // Calculate progress: 10% for init, 80% for processing, 10% for zip creation
-          const imageProgress = (i / totalImages) * 80;
-          setProcessingProgress(10 + imageProgress);
+          // Set current step based on settings
+          if (hasBackgroundRemoval) {
+            setCurrentStep('removing-background');
+            const bgProgress = (i / totalImages) * bgRemovalProgress;
+            setProcessingProgress(10 + bgProgress);
+          } else {
+            setCurrentStep('processing');
+            const imageProgress = (i / totalImages) * processingProgress;
+            setProcessingProgress(10 + imageProgress);
+          }
           
           const processedBlob = await processor.processImage(file, settings);
+          
+          // Update to processing step if we had background removal
+          if (hasBackgroundRemoval) {
+            setCurrentStep('processing');
+            const completedBgProgress = ((i + 1) / totalImages) * bgRemovalProgress;
+            const currentProcessingProgress = (i / totalImages) * processingProgress;
+            setProcessingProgress(10 + completedBgProgress + currentProcessingProgress);
+          }
+          
           processedImages.push({
             name: file.name,
             data: processedBlob,
           });
           
           // Update progress after each image
-          const completedProgress = ((i + 1) / totalImages) * 80;
+          const completedProgress = ((i + 1) / totalImages) * (bgRemovalProgress + processingProgress);
           setProcessingProgress(10 + completedProgress);
           
         } catch (error) {

@@ -63,6 +63,7 @@ const AnimatedMenuToggle = ({
 );
 
 export interface ImageProcessingSettings {
+  removeBackground: boolean;
   width: number;
   height: number;
   cropPosition: string;
@@ -165,6 +166,28 @@ const ImageProcessorSidebar = ({
 
       {/* Settings Section */}
       <div className="flex-1 p-4 overflow-y-auto space-y-6">
+        {/* Background Removal */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-gray-900">Remove Background</h3>
+            <button
+              onClick={() => updateSetting("removeBackground", !settings.removeBackground)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                settings.removeBackground ? "bg-blue-600" : "bg-gray-200"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  settings.removeBackground ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
+          </div>
+          <p className="text-sm text-gray-500">
+            Automatically remove background from images using AI. This will be applied first before other transformations.
+          </p>
+        </div>
+
         {/* Resize Settings */}
         <div className="space-y-4">
           <h3 className="font-semibold text-gray-900">Resize Dimensions</h3>

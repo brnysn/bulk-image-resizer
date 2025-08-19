@@ -23,6 +23,12 @@ export function ProcessingOverlay({
 }: ProcessingOverlayProps) {
   const getStatusMessage = (step: string) => {
     if (step === 'initializing') return 'Initializing image processing...';
+    if (step === 'removing-background') {
+      if (currentImage && totalImages && currentImageIndex !== undefined) {
+        return `Removing background ${currentImageIndex + 1} of ${totalImages}: ${currentImage}`;
+      }
+      return 'Removing backgrounds...';
+    }
     if (step === 'processing') {
       if (currentImage && totalImages && currentImageIndex !== undefined) {
         return `Processing image ${currentImageIndex + 1} of ${totalImages}: ${currentImage}`;
@@ -132,6 +138,10 @@ export function ProcessingOverlay({
                   <div className={`flex flex-col items-center ${currentStep === 'initializing' ? 'text-blue-600' : currentStep !== 'initializing' ? 'text-green-600' : ''}`}>
                     <div className={`w-2 h-2 rounded-full mb-1 ${currentStep === 'initializing' ? 'bg-blue-600' : currentStep !== 'initializing' ? 'bg-green-600' : 'bg-gray-300'}`}></div>
                     <span>Initialize</span>
+                  </div>
+                  <div className={`flex flex-col items-center ${currentStep === 'removing-background' ? 'text-blue-600' : (currentStep === 'processing' || currentStep === 'creating-zip' || currentStep === 'completed') ? 'text-green-600' : ''}`}>
+                    <div className={`w-2 h-2 rounded-full mb-1 ${currentStep === 'removing-background' ? 'bg-blue-600' : (currentStep === 'processing' || currentStep === 'creating-zip' || currentStep === 'completed') ? 'bg-green-600' : 'bg-gray-300'}`}></div>
+                    <span>Remove BG</span>
                   </div>
                   <div className={`flex flex-col items-center ${currentStep === 'processing' ? 'text-blue-600' : currentStep === 'creating-zip' || currentStep === 'completed' ? 'text-green-600' : ''}`}>
                     <div className={`w-2 h-2 rounded-full mb-1 ${currentStep === 'processing' ? 'bg-blue-600' : currentStep === 'creating-zip' || currentStep === 'completed' ? 'bg-green-600' : 'bg-gray-300'}`}></div>

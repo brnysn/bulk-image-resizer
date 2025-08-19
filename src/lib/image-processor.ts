@@ -1,4 +1,5 @@
 import JSZip from 'jszip';
+import { removeBackground } from '@imgly/background-removal';
 import { ImageProcessingSettings } from '@/components/ui/image-processor-sidebar';
 
 export interface ProcessedImage {
@@ -83,10 +84,28 @@ export class ImageProcessor {
         reject(new Error('Image loading timeout'));
       }, 30000); // 30 second timeout
 
-      img.onload = () => {
+      img.onload = async () => {
         clearTimeout(timeout);
         try {
-          const processedBlob = this.resizeAndCropImage(img, settings);
+          let processedImg = img;
+          
+          // Step 1: Remove background if enabled
+          if (settings.removeBackground) {
+            const bgRemovedBlob = await removeBackground(objectUrl!);
+            
+            // Create a new image from the background-removed blob
+            const bgRemovedImg = new Image();
+            await new Promise<void>((resolveImg, rejectImg) => {
+              bgRemovedImg.onload = () => resolveImg();
+              bgRemovedImg.onerror = rejectImg;
+              bgRemovedImg.src = URL.createObjectURL(bgRemovedBlob);
+            });
+            
+            processedImg = bgRemovedImg;
+          }
+          
+          // Step 2: Apply resize and crop transformations
+          const processedBlob = this.resizeAndCropImage(processedImg, settings);
           cleanup();
           resolve(processedBlob);
         } catch (error) {
