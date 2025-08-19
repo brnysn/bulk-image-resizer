@@ -134,6 +134,7 @@ const ImageProcessorSidebar = ({
   }, []);
 
   const cropOptions = useMemo(() => [
+    "Crop Center",
     "Crop Top Left",
     "Crop Top Middle",
     "Crop Top Right",

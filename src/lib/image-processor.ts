@@ -254,7 +254,7 @@ export class ImageProcessor {
       const baseName = this.getBaseName(image.name);
       // Use the output format from settings, fallback to original extension
       const extension = outputFormat || this.getFileExtension(image.name);
-      const newName = `${baseName}_processed.${extension}`;
+      const newName = `${baseName}.${extension}`;
       zip.file(newName, image.data);
     });
 
